@@ -139,6 +139,14 @@ $(document).ready(function() {
     $('#reset').click(function () {
         $('#calendar').fullCalendar('refetchEvents');
     });
+    $('#delete').click(function () {
+        $('#calendar').fullCalendar(
+                'removeEvents',
+                function (e) {
+                    return e.className == 'removed'
+                }
+        )
+    });
 });
 </script>
 <style>
