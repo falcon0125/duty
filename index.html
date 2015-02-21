@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<!-- saved from url=(0029)http://zoxline.ddns.net/duty/ -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<link href="http://fullcalendar.io/js/fullcalendar-2.2.6/fullcalendar.css" rel="stylesheet">
+<link href="http://fullcalendar.io/js/fullcalendar-2.2.6/fullcalendar.print.css" rel="stylesheet" media="print">
+<script src="./js/moment.min.js"></script>
+<script src="./js/jquery.min.js"></script>
+<script src="./js/jquery-ui.custom.min.js"></script>
+<script src="./js/fullcalendar.min.js"></script>
+<script>
+$(document).ready(function() {
+    $.ajax({
+        type: 'get',
+        url: './users',
+        dataType: 'json',
+        success: function (user_l) {
+            console.log(user_l);
+            for (var i = 0; i < user_l.length; i++) {
+                var name = user_l[i];
+                console.log(name);
+                var t = $('<div class="fc-event">' + name + '</div>');
+                t.draggable({zIndex: 999, revert: true, revertDuration: 20})
+                        .data('event', {
+                            title: $.trim(name), // use the element's text as the event title
+                            stick: true
+                        });
+                $('#external-events').append(t);
+            }
+            $('.fc-event').dblclick(function () {
+                $(this).remove();
+            });
+        },
+        error: function (xhr, text, errorThrown) {
+            alert('load user list failed');
+        }
+    });
+    /* initialize the external events
+     -----------------------------------------------------------------*/
+    $('#external-events .fc-event').each(function () {
+        // store data so the calendar knows to render an event upon drop
+        $(this).data('event', {
+            title: $.trim($(this).text()), // use the element's text as the event title
+            stick: true // maintain when user navigates (see docs on the renderEvent method)
+        });
+        // make the event draggable using jQuery UI
+        $(this).draggable({
+            zIndex: 999,
+            revert: true,      // will cause the event to go back to its
+            revertDuration: 20  //  original position after the drag
+        });
+    });
+    /* initialize the calendar
+     -----------------------------------------------------------------*/
+    $('#calendar').fullCalendar({
+        header: {
+            right: 'prev,next today',
+            left: 'title'
+        },
+        events: './events',
+        firstDay: 1,
+        editable: true,
+        droppable: true, // this allows things to be dropped onto the calendar
+        eventClick: function (calEvent, jsEvent, view) {
+            if (calEvent.className == 'removed') {
+                calEvent.className = undefined;
+            } else {
+                calEvent.className = 'removed'
+            }
+            $('#calendar').fullCalendar('renderEvent', calEvent);
+        }
+    });
+    //新增使用者
+    $('#user_submit').click(function () {
+        var name = $('#user_name').val();
+        var c = [];
+        $('#external-events >.fc-event').each(function () {
+            c.push($(this).text())
+        });
+        if (c.indexOf(name) != -1) {
+            alert('name already exist');
+        }
+        else {
+            var t = $('<div class="fc-event">' + name + '</div>');
+            t.draggable({zIndex: 999, revert: true, revertDuration: 20})
+                    .data('event', {title: $.trim(name), stick: true});
+            $('#external-events').append(t);
+            $('.fc-event').dblclick(function () {$(this).remove();})
+        }
+    });
+    // 儲存
+    $('#save').click(function () {
+        var c = $('#calendar').fullCalendar('clientEvents');
+        var l = [];
+        //save event list
+        c.forEach(function (e) {
+            var uid = e.id;
+            var t = e.title;
+            var d = e.start._d.toString().slice(0, 15);
+            s = {'id': uid, 'title': t, 'start': d};
+            l.push(s);
+        });
+        var J = JSON.stringify(l);
+        //console.log(J);
+        // save user list
+        c = $('#external-events >.fc-event').toArray();
+        var users = c.map(function (e) {
+            return $(e).text()
+        });
+        users = JSON.stringify(users);
+        $.ajax({
+            type: 'post',
+            url: './events',
+            dataType: 'text',
+            data: {content: J},
+            success: function (msg) {
+                console.log(msg);
+            },
+            error: function (xhr, text, errorThrown) {
+                alert('POST EVENTS FAILED');
+            }
+        });
+        $.ajax({
+            type: 'post',
+            url: './users',
+            dataType: 'text',
+            data: {content: users},
+            success: function (msg) {
+                console.log(msg);
+            },
+            error: function (xhr, text, errorThrown) {
+                alert('POST USER FAILED');
+            }
+        });
+        alert('Saved');
+        window.location = './';
+    });
+    $('#reset').click(function () {
+        $('#calendar').fullCalendar('refetchEvents');
+    });
+});
+</script>
+<style>
+
+	body {
+		margin-top: 40px;
+		text-align: center;
+		font-size: 14px;
+		font-family: "Lucida Grande",Helvetica,Arial,Verdana,sans-serif;
+	}
+
+	#wrap {
+		width: 1100px;
+		margin: 0 auto;
+	}
+
+	#external-events {
+		float: left;
+		width: 150px;
+		padding: 0 10px;
+		border: 1px solid #ccc;
+		background: #eee;
+		text-align: left;
+	}
+	#setting {
+		float: left;
+		width: 150px;
+		padding: 0 10px;
+		border: 1px solid #ccc;
+		background: #eee;
+		text-align: left;
+	}
+
+	#external-events h4 {
+		font-size: 16px;
+		margin-top: 0;
+		padding-top: 1em;
+	}
+
+	#external-events .fc-event {
+		margin: 10px 0;
+		cursor: pointer;
+	}
+
+	#external-events p {
+		margin: 1.5em 0;
+		font-size: 11px;
+		color: #666;
+	}
+
+	#external-events p input {
+		margin: 0;
+		vertical-align: middle;
+	}
+
+	#calendar {
+		clear:both;
+		width: 900px;
+	}
+	.removed{
+		background-color: #d36464;
+	}
+
+</style>
+<title>DUTY</title>
+</head>
+<body>
+	<div id="wrap">
+		<div id="external-events">
+			<h4>Name list</h4>
+</div>
+            <div id="setting">
+		<p>
+				<label>新使用者</label>
+				<input type="text" id="user_name">
+				<button type="button" id="user_submit">增加</button>
+			</p>
+			<hr>
+			<p>
+				<button type="button" id="save">儲存狀態</button>
+			</p>
+			<p>
+				<button type="button" id="delete">刪除選擇日期</button>
+			</p>
+			<p>
+				<button type="button" id="reset">重設</button>
+			</p>
+		</div>
+		<div id="calendar"></div>
+</div>
+</body>
+</html>
