@@ -16,10 +16,10 @@ $(document).ready(function() {
         url: './users',
         dataType: 'json',
         success: function (user_l) {
-            console.log(user_l);
+            //console.log(user_l);
             for (var i = 0; i < user_l.length; i++) {
                 var name = user_l[i];
-                console.log(name);
+                //console.log(name);
                 var t = $('<div class="fc-event">' + name + '</div>');
                 t.draggable({zIndex: 999, revert: true, revertDuration: 20})
                         .data('event', {
@@ -115,7 +115,7 @@ $(document).ready(function() {
             dataType: 'text',
             data: {content: J},
             success: function (msg) {
-                console.log(msg);
+                //console.log(msg);
             },
             error: function (xhr, text, errorThrown) {
                 alert('POST EVENTS FAILED');
@@ -127,7 +127,7 @@ $(document).ready(function() {
             dataType: 'text',
             data: {content: users},
             success: function (msg) {
-                console.log(msg);
+                //console.log(msg);
             },
             error: function (xhr, text, errorThrown) {
                 alert('POST USER FAILED');
