@@ -5,9 +5,11 @@ import urllib
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from google.appengine.ext.webapp.util import run_wsgi_app
 
 import jinja2
 import webapp2
+import logging
 
 
 JINJA_ENVIRONMENT = jinja2.Environment(
@@ -60,8 +62,20 @@ class users_handler(webapp2.RequestHandler):
         USERSQ = Userlist.query(ancestor=ndb.Key('USERLIST', 'default')).order(-Userlist.date)
         users = USERSQ.fetch(1)
         self.response.write(users[0].content)
-
+        logging.info('get users %s', repr(self.response))
 
 app = webapp2.WSGIApplication([
                                   ('/', MainHandler), ('/events', events_handler), ('/users', users_handler)
                               ], debug=True)
+
+
+def main():
+    # Set the logging level in the main function
+    # See the section on Requests and App Caching for information on how
+    # App Engine reuses your request handlers when you specify a main function
+    logging.getLogger().setLevel(logging.DEBUG)
+    run_wsgi_app(app)
+
+
+if __name__ == '__main__':
+    main()
